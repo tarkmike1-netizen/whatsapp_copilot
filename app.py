@@ -6,18 +6,8 @@ st.set_page_config(page_title="Chat Copilot Workspace", page_icon="💬", layout
 
 st.title("💬 Chat Copilot Workspace")
 
-# Pull available contacts from the database
-try:
-    conn = engine.sqlite3.connect("copilot_memory.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT contact_uid FROM chat_logs")
-    contacts = [row[0] for row in cursor.fetchall()]
-    conn.close()
-except Exception:
-    contacts = []
-
-# Sidebar for choosing conversations
-selected_contact = st.sidebar.selectbox("Select a conversation:", [""] + contacts)
+# Change the selectbox to a direct text input field so you can type any number
+selected_contact = st.sidebar.text_input("Enter or paste phone number (e.g., +254700000000):")
 
 if selected_contact:
     st.subheader(f"Managing Conversation: {selected_contact}")
@@ -49,7 +39,7 @@ if selected_contact:
             f'text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer;">'
             f'🚀 Open & Draft in WhatsApp'
             f'</div></a>', 
-            unsafe_allow_index=True, unsafe_allow_html=True
+            unsafe_allow_html=True
         )
 else:
-    st.info("Please select or simulate a contact profile from the left sidebar to begin.")
+    st.info("Please enter a phone number in the left sidebar to begin.")
