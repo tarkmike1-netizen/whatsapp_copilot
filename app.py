@@ -7,17 +7,26 @@ st.set_page_config(page_title="Chat Copilot Workspace", page_icon="💬", layout
 
 st.title("💬 Chat Copilot Workspace")
 
-# Direct mobile phone number input field in sidebar
+# 1. Sidebar Inputs
 selected_contact = st.sidebar.text_input("Enter or paste phone number (e.g., +254711223344):")
+
+# New goal tracking box in the sidebar
+conversation_goal = st.sidebar.text_area(
+    "Set a goal for this chat (Optional):", 
+    placeholder="e.g., Convince them to come through for Friday plan / Ask if they finished the assignment"
+)
 
 if selected_contact:
     st.subheader(f"📱 Active Thread: {selected_contact}")
     
-    # --- STEP 1: RENDERING THE LIVE CHAT TIMELINE ---
+    # Render the goal at the top if one is set
+    if conversation_goal:
+        st.warning(f"🎯 **Current Conversation Goal:** {conversation_goal}")
+    
+    # --- STEP 2: RENDERING THE LIVE CHAT TIMELINE ---
     st.markdown("### 🕒 Recent Conversation History")
     
     try:
-        # Pull the logged history directly from the cloud database setup
         conn = sqlite3.connect("copilot_memory.db")
         cursor = conn.cursor()
         cursor.execute("""
@@ -29,7 +38,6 @@ if selected_contact:
         conn.close()
         
         if rows:
-            # Re-order to chronological display order (oldest at the top)
             for sender, msg, time in reversed(rows):
                 if sender == "Friend":
                     st.markdown(f"**👤 Friend:** `{msg}`")
@@ -42,15 +50,15 @@ if selected_contact:
         
     st.markdown("---")
     
-    # --- STEP 2: INCOMING SIMULATOR ENGINE ---
+    # --- STEP 3: INCOMING SIMULATOR ENGINE ---
     st.markdown("### 📥 Input New Incoming Message")
     incoming_text = st.text_input("Paste the new text your friend just sent here:", key="new_message_input")
     
     if incoming_text:
         try:
             with st.spinner("Analyzing thread context and drafting..."):
-                # Cook up the response based on the continuous memory logs
-                draft_reply = engine.build_draft_reply(selected_contact, incoming_text)
+                # We now pass the conversation goal into our engine script
+                draft_reply = engine.build_draft_reply(selected_contact, incoming_text, conversation_goal)
             
             st.markdown("### 💡 AI Generated Response Draft")
             st.info(f"**Draft:** {draft_reply}")
@@ -69,7 +77,6 @@ if selected_contact:
                 unsafe_allow_html=True
             )
             
-            # Automatically log Mike's draft to memory so it updates the timeline loop next time
             if st.button("✅ Log My Sent Reply to Memory"):
                 engine.log_message(selected_contact, "Mike", draft_reply)
                 st.rerun()
